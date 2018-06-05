@@ -23,11 +23,11 @@ android {
     compileSdkVersion project.androidCompileSdkVersion
     buildToolsVersion project.androidBuildToolsVersion
 
+//    testBuildType "amazonDebug"
+
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 25
-
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         // only enable if debug builds exceed 64K method limit
         multiDexEnabled false
@@ -53,16 +53,16 @@ android {
         }
     }
 
-    sourceSets {
-        String sharedTestDir = 'src/sharedTest/java'
-        String testDir = 'src/test/java'
-        test {
-            java.srcDir testDir
-        }
-        androidTest {
-            java.srcDir sharedTestDir
-        }
-    }
+//    sourceSets {
+//        String sharedTestDir = 'src/androidTest/java'
+//        String testDir = 'src/test/java'
+//        test {
+//            java.srcDir testDir
+//        }
+//        androidTest {
+//            java.srcDir sharedTestDir
+//        }
+//    }
 
     compileOptions {
         encoding = "UTF-8"
@@ -144,13 +144,19 @@ endpointsClient {
                      'src/endpoints/shows-v2-rest.discovery']
 }
 
+configurations.all {
+    resolutionStrategy {
+        force 'com.android.support:support-annotations:25.3.1'
+    }
+}
+
 dependencies {
     compile project(':api')
     compile project(':libraries:drag-sort-listview')
     compile project(':libraries:stickygridheaders')
 
     // https://docs.fabric.io/android/changelog.html
-    compile('com.crashlytics.sdk.android:crashlytics:2.6.8@aar') {
+    compile('com.crashlytics.sdk.android:crashlytics:2.9.3@aar') {
         transitive = true
     }
     compile 'com.github.castorflex.smoothprogressbar:library:1.1.0'
@@ -226,14 +232,15 @@ dependencies {
     amazonCompile files('libs/amazon/in-app-purchasing-2.0.76.jar')
 
     // Instrumented unit tests
-    androidTestCompile "com.android.support:support-annotations:$supportVersion"
-    androidTestCompile 'com.android.support.test:runner:0.5'
-    androidTestCompile 'com.android.support.test:rules:0.5'
-    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2'
-    androidTestCompile 'com.squareup.assertj:assertj-android:1.1.1'
+    androidTestCompile 'com.android.support:support-annotations:25.3.1'
+    androidTestCompile 'com.android.support.test:runner:1.0.2'
+    androidTestCompile 'com.android.support.test:rules:1.0.2'
+    // Optional -- UI testing with Espresso
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     // Local unit tests
     testCompile 'junit:junit:4.12'
+//    androidTestCompile 'junit:junit:4.12'
     testCompile "com.android.support:support-annotations:$supportVersion"
     testCompile 'com.squareup.assertj:assertj-android:1.1.1'
     // include regular threetenbp to have access to the tz database without init call
