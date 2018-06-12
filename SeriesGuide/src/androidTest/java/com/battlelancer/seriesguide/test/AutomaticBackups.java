@@ -83,6 +83,8 @@ public class AutomaticBackups {
         btnAllow.click();
 
         onView(withId(R.id.switchAutoBackup)).check(matches(isChecked()));
+
+        getActivity().finish();
     }
 
     private static Activity getActivity() {
