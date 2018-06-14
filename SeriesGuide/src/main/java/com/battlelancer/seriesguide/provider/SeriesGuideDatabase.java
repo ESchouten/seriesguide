@@ -72,6 +72,21 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
     public static final int DBVER_32_MOVIES = 32;
 
     public static final int DBVER_33_IGNORE_ARTICLE_SORT = 33;
+    
+    // Query builder syntax
+    static final String QUERY_SELECT = "SELECT ";
+    static final String QUERY_FROM = "FROM ";
+    static final String QUERY_WHERE = "WHERE ";
+    static final String QUERY_LEFTOUTERJOIN = "LEFT OUTER JOIN ";
+    static final String QUERY_ON = "ON ";
+    static final String QUERY_AS = "AS ";
+    static final String QUERY_UNIONSELECT = "UNION SELECT ";
+    static final String QUERY_REFERENCES = "REFERENCES ";
+    static final String QUERY_ONCONFLICTREPLACE = "ON CONFLICT REPLACE ";
+    static final String QUERY_CREATETABLE = "CREATE TABLE ";
+    static final String QUERY_INSERTORIGNOREINTO = "INSERT OR IGNORE INTO ";
+    static final String QUERY_JOIN = "JOIN ";
+    static final String QUERY_ALTERTABLE = "ALTER TABLE ";
 
     /**
      * Changes for trakt v2 compatibility, also for storing ratings offline.
@@ -151,156 +166,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
 
     public static final int DATABASE_VERSION = DBVER_41_EPISODE_LAST_UPDATED;
 
-    /**
-     * Qualifies column names by prefixing their {@link Tables} name.
-     */
-    public interface Qualified {
-
-        String SHOWS_ID = Tables.SHOWS + "." + Shows._ID;
-        String SHOWS_LAST_EPISODE = Tables.SHOWS + "." + Shows.LASTWATCHEDID;
-        String SHOWS_NEXT_EPISODE = Tables.SHOWS + "." + Shows.NEXTEPISODE;
-        String EPISODES_ID = Tables.EPISODES + "." + Episodes._ID;
-        String EPISODES_SHOW_ID = Tables.EPISODES + "." + Shows.REF_SHOW_ID;
-        String SEASONS_ID = Tables.SEASONS + "." + Seasons._ID;
-        String SEASONS_SHOW_ID = Tables.SEASONS + "." + Shows.REF_SHOW_ID;
-        String LIST_ITEMS_REF_ID = Tables.LIST_ITEMS + "." + ListItems.ITEM_REF_ID;
-    }
-
-    public interface Tables {
-
-        String SHOWS = "series";
-
-        String SEASONS = "seasons";
-
-        String EPISODES = "episodes";
-
-        String SHOWS_JOIN_EPISODES_ON_LAST_EPISODE = SHOWS + " LEFT OUTER JOIN " + EPISODES
-                + " ON " + Qualified.SHOWS_LAST_EPISODE + "=" + Qualified.EPISODES_ID;
-
-        String SHOWS_JOIN_EPISODES_ON_NEXT_EPISODE = SHOWS + " LEFT OUTER JOIN " + EPISODES
-                + " ON " + Qualified.SHOWS_NEXT_EPISODE + "=" + Qualified.EPISODES_ID;
-
-        String SEASONS_JOIN_SHOWS = SEASONS + " LEFT OUTER JOIN " + SHOWS
-                + " ON " + Qualified.SEASONS_SHOW_ID + "=" + Qualified.SHOWS_ID;
-
-        String EPISODES_JOIN_SHOWS = EPISODES + " LEFT OUTER JOIN " + SHOWS
-                + " ON " + Qualified.EPISODES_SHOW_ID + "=" + Qualified.SHOWS_ID;
-
-        String EPISODES_SEARCH = "searchtable";
-
-        String LISTS = "lists";
-
-        String LIST_ITEMS = "listitems";
-
-        String LIST_ITEMS_WITH_DETAILS = "("
-                // shows
-                + "SELECT " + Selections.SHOWS_COLUMNS + " FROM "
-                + "("
-                + Selections.LIST_ITEMS_SHOWS
-                + " LEFT OUTER JOIN " + Tables.SHOWS
-                + " ON " + Qualified.LIST_ITEMS_REF_ID + "=" + Qualified.SHOWS_ID
-                + ")"
-                // seasons
-                + " UNION SELECT " + Selections.SEASONS_COLUMNS + " FROM "
-                + "("
-                + Selections.LIST_ITEMS_SEASONS
-                + " LEFT OUTER JOIN " + "(" + SEASONS_JOIN_SHOWS + ") AS " + Tables.SEASONS
-                + " ON " + Qualified.LIST_ITEMS_REF_ID + "=" + Qualified.SEASONS_ID
-                + ")"
-                // episodes
-                + " UNION SELECT " + Selections.EPISODES_COLUMNS + " FROM "
-                + "("
-                + Selections.LIST_ITEMS_EPISODES
-                + " LEFT OUTER JOIN " + "(" + EPISODES_JOIN_SHOWS + ") AS " + Tables.EPISODES
-                + " ON " + Qualified.LIST_ITEMS_REF_ID + "=" + Qualified.EPISODES_ID
-                + ")"
-                //
-                + ")";
-
-        String MOVIES = "movies";
-
-        String ACTIVITY = "activity";
-    }
-
-    private interface Selections {
-
-        String LIST_ITEMS_SHOWS = "(SELECT " + Selections.LIST_ITEMS_COLUMNS_INTERNAL
-                + " FROM " + Tables.LIST_ITEMS
-                + " WHERE " + ListItems.SELECTION_SHOWS + ")"
-                + " AS " + Tables.LIST_ITEMS;
-
-        String LIST_ITEMS_SEASONS = "(SELECT " + Selections.LIST_ITEMS_COLUMNS_INTERNAL
-                + " FROM " + Tables.LIST_ITEMS
-                + " WHERE " + ListItems.SELECTION_SEASONS + ")"
-                + " AS " + Tables.LIST_ITEMS;
-
-        String LIST_ITEMS_EPISODES = "(SELECT " + Selections.LIST_ITEMS_COLUMNS_INTERNAL
-                + " FROM " + Tables.LIST_ITEMS
-                + " WHERE " + ListItems.SELECTION_EPISODES + ")"
-                + " AS " + Tables.LIST_ITEMS;
-
-        String LIST_ITEMS_COLUMNS_INTERNAL =
-                ListItems._ID + " as listitem_id,"
-                        + ListItems.LIST_ITEM_ID + ","
-                        + Lists.LIST_ID + ","
-                        + ListItems.TYPE + ","
-                        + ListItems.ITEM_REF_ID;
-
-        String COMMON_LIST_ITEMS_COLUMNS =
-                // from list items table
-                "listitem_id as " + ListItems._ID + ","
-                        + ListItems.LIST_ITEM_ID + ","
-                        + Lists.LIST_ID + ","
-                        + ListItems.TYPE + ","
-                        + ListItems.ITEM_REF_ID + ","
-                        // from shows table
-                        + Shows.TITLE + ","
-                        + Shows.TITLE_NOARTICLE + ","
-                        + Shows.POSTER + ","
-                        + Shows.NETWORK + ","
-                        + Shows.STATUS + ","
-                        + Shows.FAVORITE + ","
-                        + Shows.RELEASE_WEEKDAY + ","
-                        + Shows.RELEASE_TIMEZONE + ","
-                        + Shows.RELEASE_COUNTRY + ","
-                        + Shows.LASTWATCHED_MS + ","
-                        + Shows.UNWATCHED_COUNT;
-
-        String SHOWS_COLUMNS = COMMON_LIST_ITEMS_COLUMNS + ","
-                + Qualified.SHOWS_ID + " as " + Shows.REF_SHOW_ID + ","
-                + Shows.OVERVIEW + ","
-                + Shows.RELEASE_TIME + ","
-                + Shows.NEXTTEXT + ","
-                + Shows.NEXTAIRDATETEXT + ","
-                + Shows.NEXTAIRDATEMS;
-
-        String SEASONS_COLUMNS = COMMON_LIST_ITEMS_COLUMNS + ","
-                + Shows.REF_SHOW_ID + ","
-                + Seasons.COMBINED + " as " + Shows.OVERVIEW + ","
-                + Shows.RELEASE_TIME + ","
-                + Shows.NEXTTEXT + ","
-                + Shows.NEXTAIRDATETEXT + ","
-                + Shows.NEXTAIRDATEMS;
-
-        String EPISODES_COLUMNS = COMMON_LIST_ITEMS_COLUMNS + ","
-                + Shows.REF_SHOW_ID + ","
-                + Episodes.TITLE + " as " + Shows.OVERVIEW + ","
-                + Episodes.FIRSTAIREDMS + " as " + Shows.RELEASE_TIME + ","
-                + Episodes.SEASON + " as " + Shows.NEXTTEXT + ","
-                + Episodes.NUMBER + " as " + Shows.NEXTAIRDATETEXT + ","
-                + Episodes.FIRSTAIREDMS + " as " + Shows.NEXTAIRDATEMS;
-    }
-
-    interface References {
-
-        String SHOW_ID = "REFERENCES " + Tables.SHOWS + "(" + BaseColumns._ID + ")";
-
-        String SEASON_ID = "REFERENCES " + Tables.SEASONS + "(" + BaseColumns._ID + ")";
-
-        String LIST_ID = "REFERENCES " + Tables.LISTS + "(" + Lists.LIST_ID + ")";
-    }
-
-    private static final String CREATE_SHOWS_TABLE = "CREATE TABLE " + Tables.SHOWS
+    private static final String CREATE_SHOWS_TABLE = QUERY_CREATETABLE + Tables.SHOWS
             + " ("
 
             + BaseColumns._ID + " INTEGER PRIMARY KEY,"
@@ -376,7 +242,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
 
             + ");";
 
-    private static final String CREATE_SEASONS_TABLE = "CREATE TABLE " + Tables.SEASONS
+    private static final String CREATE_SEASONS_TABLE = QUERY_CREATETABLE + Tables.SEASONS
             + " ("
 
             + BaseColumns._ID + " INTEGER PRIMARY KEY,"
@@ -397,7 +263,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
 
             + ");";
 
-    private static final String CREATE_EPISODES_TABLE = "CREATE TABLE " + Tables.EPISODES
+    private static final String CREATE_EPISODES_TABLE = QUERY_CREATETABLE + Tables.EPISODES
             + " ("
 
             + BaseColumns._ID + " INTEGER PRIMARY KEY,"
@@ -468,7 +334,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
 
             + ");";
 
-    private static final String CREATE_LISTS_TABLE = "CREATE TABLE " + Tables.LISTS
+    private static final String CREATE_LISTS_TABLE = QUERY_CREATETABLE + Tables.LISTS
             + " ("
 
             + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -479,11 +345,11 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
 
             + ListsColumns.ORDER + " INTEGER DEFAULT 0,"
 
-            + "UNIQUE (" + ListsColumns.LIST_ID + ") ON CONFLICT REPLACE"
+            + "UNIQUE (" + ListsColumns.LIST_ID + ") " + QUERY_ONCONFLICTREPLACE
 
             + ");";
 
-    private static final String CREATE_LIST_ITEMS_TABLE = "CREATE TABLE " + Tables.LIST_ITEMS
+    private static final String CREATE_LIST_ITEMS_TABLE = QUERY_CREATETABLE + Tables.LIST_ITEMS
             + " ("
 
             + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -496,11 +362,11 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
 
             + ListsColumns.LIST_ID + " TEXT " + References.LIST_ID + ","
 
-            + "UNIQUE (" + ListItemsColumns.LIST_ITEM_ID + ") ON CONFLICT REPLACE"
+            + "UNIQUE (" + ListItemsColumns.LIST_ITEM_ID + ") " + QUERY_ONCONFLICTREPLACE
 
             + ");";
 
-    private static final String CREATE_MOVIES_TABLE = "CREATE TABLE " + Tables.MOVIES
+    private static final String CREATE_MOVIES_TABLE = QUERY_CREATETABLE + Tables.MOVIES
             + " ("
 
             + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -547,17 +413,17 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
 
             + MoviesColumns.LAST_UPDATED + " INTEGER,"
 
-            + "UNIQUE (" + MoviesColumns.TMDB_ID + ") ON CONFLICT REPLACE"
+            + "UNIQUE (" + MoviesColumns.TMDB_ID + ") " + QUERY_ONCONFLICTREPLACE
 
             + ");";
 
-    private static final String CREATE_ACTIVITY_TABLE = "CREATE TABLE " + Tables.ACTIVITY
+    private static final String CREATE_ACTIVITY_TABLE = QUERY_CREATETABLE + Tables.ACTIVITY
             + " ("
             + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
             + ActivityColumns.EPISODE_TVDB_ID + " TEXT NOT NULL,"
             + ActivityColumns.SHOW_TVDB_ID + " TEXT NOT NULL,"
             + ActivityColumns.TIMESTAMP_MS + " INTEGER NOT NULL,"
-            + "UNIQUE (" + ActivityColumns.EPISODE_TVDB_ID + ") ON CONFLICT REPLACE"
+            + "UNIQUE (" + ActivityColumns.EPISODE_TVDB_ID + ") " + QUERY_ONCONFLICTREPLACE
             + ");";
 
     private final Context context;
@@ -686,7 +552,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      */
     private static void upgradeToFortyOne(SQLiteDatabase db) {
         if (isTableColumnMissing(db, Tables.EPISODES, Episodes.LAST_UPDATED)) {
-            db.execSQL("ALTER TABLE " + Tables.EPISODES + " ADD COLUMN "
+            db.execSQL(QUERY_ALTERTABLE + Tables.EPISODES + " ADD COLUMN "
                     + Episodes.LAST_UPDATED + " INTEGER DEFAULT 0;");
         }
     }
@@ -696,7 +562,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      */
     private static void upgradeToForty(SQLiteDatabase db, Context context) {
         if (isTableColumnMissing(db, Tables.SHOWS, Shows.NOTIFY)) {
-            db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN "
+            db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN "
                     + Shows.NOTIFY + " INTEGER DEFAULT 1;");
 
             // check if notifications should be enabled only for favorite shows
@@ -716,11 +582,11 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      */
     private static void upgradeToThirtyNine(SQLiteDatabase db) {
         if (isTableColumnMissing(db, Tables.SHOWS, Shows.LASTWATCHED_MS)) {
-            db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN "
+            db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN "
                     + Shows.LASTWATCHED_MS + " INTEGER DEFAULT 0;");
         }
         if (isTableColumnMissing(db, Tables.SHOWS, Shows.UNWATCHED_COUNT)) {
-            db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN "
+            db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN "
                     + Shows.UNWATCHED_COUNT + " INTEGER DEFAULT " + DBUtils.UNKNOWN_UNWATCHED_COUNT
                     + ";");
         }
@@ -731,7 +597,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      */
     private static void upgradeToThirtyEight(SQLiteDatabase db) {
         if (isTableColumnMissing(db, Tables.SHOWS, Shows.TRAKT_ID)) {
-            db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN "
+            db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN "
                     + Shows.TRAKT_ID + " INTEGER DEFAULT 0;");
         }
     }
@@ -741,7 +607,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      */
     private static void upgradeToThirtySeven(SQLiteDatabase db) {
         if (isTableColumnMissing(db, Tables.SHOWS, Shows.LANGUAGE)) {
-            db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN "
+            db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN "
                     + Shows.LANGUAGE + " TEXT DEFAULT '';");
         }
     }
@@ -751,7 +617,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      */
     private static void upgradeToThirtySix(SQLiteDatabase db) {
         if (isTableColumnMissing(db, Tables.LISTS, Lists.ORDER)) {
-            db.execSQL("ALTER TABLE " + Tables.LISTS + " ADD COLUMN "
+            db.execSQL(QUERY_ALTERTABLE + Tables.LISTS + " ADD COLUMN "
                     + Lists.ORDER + " INTEGER DEFAULT 0;");
         }
     }
@@ -774,11 +640,11 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
         try {
             // shows
             if (isTableColumnMissing(db, Tables.SHOWS, Shows.RELEASE_TIMEZONE)) {
-                db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN "
+                db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN "
                         + Shows.RELEASE_TIMEZONE + " TEXT;");
             }
             if (isTableColumnMissing(db, Tables.SHOWS, Shows.RATING_VOTES)) {
-                db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN "
+                db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN "
                         + Shows.RATING_VOTES + " INTEGER;");
             }
             if (isTableColumnMissing(db, Tables.SHOWS, Shows.RATING_USER)) {
@@ -788,17 +654,17 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
 
             // episodes
             if (isTableColumnMissing(db, Tables.EPISODES, Episodes.RATING_VOTES)) {
-                db.execSQL("ALTER TABLE " + Tables.EPISODES + " ADD COLUMN "
+                db.execSQL(QUERY_ALTERTABLE + Tables.EPISODES + " ADD COLUMN "
                         + Episodes.RATING_VOTES + " INTEGER;");
             }
             if (isTableColumnMissing(db, Tables.EPISODES, Episodes.RATING_USER)) {
-                db.execSQL("ALTER TABLE " + Tables.EPISODES + " ADD COLUMN "
+                db.execSQL(QUERY_ALTERTABLE + Tables.EPISODES + " ADD COLUMN "
                         + Episodes.RATING_USER + " INTEGER;");
             }
 
             // movies
             if (isTableColumnMissing(db, Tables.MOVIES, Movies.RATING_USER)) {
-                db.execSQL("ALTER TABLE " + Tables.MOVIES + " ADD COLUMN "
+                db.execSQL(QUERY_ALTERTABLE + Tables.MOVIES + " ADD COLUMN "
                         + Movies.RATING_USER + " INTEGER;");
             }
 
@@ -855,11 +721,11 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
         Add new columns. Added existence checks as 14.0.3 update botched upgrade process.
          */
         if (isTableColumnMissing(db, Tables.SHOWS, Shows.TITLE_NOARTICLE)) {
-            db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN " + Shows.TITLE_NOARTICLE
+            db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN " + Shows.TITLE_NOARTICLE
                     + " TEXT;");
         }
         if (isTableColumnMissing(db, Tables.MOVIES, Movies.TITLE_NOARTICLE)) {
-            db.execSQL("ALTER TABLE " + Tables.MOVIES + " ADD COLUMN " + Movies.TITLE_NOARTICLE
+            db.execSQL(QUERY_ALTERTABLE + Tables.MOVIES + " ADD COLUMN " + Movies.TITLE_NOARTICLE
                     + " TEXT;");
         }
 
@@ -934,7 +800,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      */
     private static void upgradeToThirtyOne(SQLiteDatabase db) {
         if (isTableColumnMissing(db, Tables.SHOWS, Shows.LASTWATCHEDID)) {
-            db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN " + Shows.LASTWATCHEDID
+            db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN " + Shows.LASTWATCHEDID
                     + " INTEGER DEFAULT 0;");
         }
 
@@ -981,7 +847,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      */
     private static void upgradeToThirty(SQLiteDatabase db) {
         if (isTableColumnMissing(db, Tables.EPISODES, Episodes.ABSOLUTE_NUMBER)) {
-            db.execSQL("ALTER TABLE " + Tables.EPISODES + " ADD COLUMN "
+            db.execSQL(QUERY_ALTERTABLE + Tables.EPISODES + " ADD COLUMN "
                     + Episodes.ABSOLUTE_NUMBER + " INTEGER;");
         }
     }
@@ -1000,11 +866,11 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      * Add {@link Shows} column for storing last time of edit as well.
      */
     private static void upgradeToTwentySeven(SQLiteDatabase db) {
-        db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.LASTEDIT
+        db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.LASTEDIT
                 + " INTEGER DEFAULT 0;");
-        db.execSQL("ALTER TABLE " + Tables.EPISODES + " ADD COLUMN " + EpisodesColumns.IMDBID
+        db.execSQL(QUERY_ALTERTABLE + Tables.EPISODES + " ADD COLUMN " + EpisodesColumns.IMDBID
                 + " TEXT DEFAULT '';");
-        db.execSQL("ALTER TABLE " + Tables.EPISODES + " ADD COLUMN " + EpisodesColumns.LAST_EDITED
+        db.execSQL(QUERY_ALTERTABLE + Tables.EPISODES + " ADD COLUMN " + EpisodesColumns.LAST_EDITED
                 + " INTEGER DEFAULT 0;");
     }
 
@@ -1013,7 +879,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      * physical form.
      */
     private static void upgradeToTwentySix(SQLiteDatabase db) {
-        db.execSQL("ALTER TABLE " + Tables.EPISODES + " ADD COLUMN " + EpisodesColumns.COLLECTED
+        db.execSQL(QUERY_ALTERTABLE + Tables.EPISODES + " ADD COLUMN " + EpisodesColumns.COLLECTED
                 + " INTEGER DEFAULT 0;");
     }
 
@@ -1022,7 +888,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      * than as text.
      */
     private static void upgradeToTwentyFive(SQLiteDatabase db) {
-        db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.NEXTAIRDATEMS
+        db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.NEXTAIRDATEMS
                 + " INTEGER DEFAULT 0;");
     }
 
@@ -1031,7 +897,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      * milliseconds.
      */
     private static void upgradeToTwentyFour(SQLiteDatabase db) {
-        db.execSQL("ALTER TABLE " + Tables.EPISODES + " ADD COLUMN " + EpisodesColumns.FIRSTAIREDMS
+        db.execSQL(QUERY_ALTERTABLE + Tables.EPISODES + " ADD COLUMN " + EpisodesColumns.FIRSTAIREDMS
                 + " INTEGER DEFAULT -1;");
 
         // populate the new column from existing data
@@ -1083,7 +949,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      * hiding shows.
      */
     private static void upgradeToTwentyThree(SQLiteDatabase db) {
-        db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.HIDDEN
+        db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.HIDDEN
                 + " INTEGER DEFAULT 0;");
     }
 
@@ -1093,18 +959,18 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      * will get updated regardless if it has been marked as updated or not.
      */
     private static void upgradeToTwentyTwo(SQLiteDatabase db) {
-        db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.LASTUPDATED
+        db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.LASTUPDATED
                 + " INTEGER DEFAULT 0;");
     }
 
     private static void upgradeToTwentyOne(SQLiteDatabase db) {
-        db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.RELEASE_COUNTRY
+        db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.RELEASE_COUNTRY
                 + " TEXT DEFAULT '';");
     }
 
     private static void upgradeToTwenty(SQLiteDatabase db) {
         db.execSQL(
-                "ALTER TABLE " + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.HEXAGON_MERGE_COMPLETE
+                QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.HEXAGON_MERGE_COMPLETE
                         + " INTEGER DEFAULT 1;");
     }
 
@@ -1112,7 +978,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      * In version 19 the season integer column totalcount was added.
      */
     private static void upgradeToNineteen(SQLiteDatabase db) {
-        db.execSQL("ALTER TABLE " + Tables.SEASONS + " ADD COLUMN " + SeasonsColumns.TOTALCOUNT
+        db.execSQL(QUERY_ALTERTABLE + Tables.SEASONS + " ADD COLUMN " + SeasonsColumns.TOTALCOUNT
                 + " INTEGER DEFAULT 0;");
     }
 
@@ -1120,7 +986,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      * In version 18 the series text column nextairdatetext was added.
      */
     private static void upgradeToEighteen(SQLiteDatabase db) {
-        db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.NEXTAIRDATETEXT
+        db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.NEXTAIRDATETEXT
                 + " TEXT DEFAULT '';");
 
         // convert status text to 0/1 integer
@@ -1159,7 +1025,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
      * In version 17 the series boolean column favorite was added.
      */
     private static void upgradeToSeventeen(SQLiteDatabase db) {
-        db.execSQL("ALTER TABLE " + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.FAVORITE
+        db.execSQL(QUERY_ALTERTABLE + Tables.SHOWS + " ADD COLUMN " + ShowsColumns.FAVORITE
                 + " INTEGER DEFAULT 0;");
     }
 
@@ -1186,7 +1052,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
         try {
             db.beginTransaction();
             try {
-                db.execSQL("INSERT OR IGNORE INTO " + Tables.EPISODES_SEARCH
+                db.execSQL(QUERY_INSERTORIGNOREINTO + Tables.EPISODES_SEARCH
                         + "(" + Tables.EPISODES_SEARCH + ") VALUES('rebuild')");
                 db.setTransactionSuccessful();
             } finally {
@@ -1206,11 +1072,11 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
             db.beginTransaction();
             try {
                 db.execSQL(
-                        "INSERT OR IGNORE INTO " + Tables.EPISODES_SEARCH
+                        QUERY_INSERTORIGNOREINTO + Tables.EPISODES_SEARCH
                                 + "(docid," + Episodes.TITLE + "," + Episodes.OVERVIEW + ")"
-                                + " select " + Episodes._ID + "," + Episodes.TITLE
+                                + " " + QUERY_SELECT + Episodes._ID + "," + Episodes.TITLE
                                 + "," + Episodes.OVERVIEW
-                                + " from " + Tables.EPISODES + ";");
+                                + " " + QUERY_FROM + Tables.EPISODES + ";");
                 db.setTransactionSuccessful();
             } finally {
                 db.endTransaction();
@@ -1235,10 +1101,10 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
             db.beginTransaction();
             try {
                 db.execSQL(
-                        "INSERT OR IGNORE INTO " + Tables.EPISODES_SEARCH
+                        QUERY_INSERTORIGNOREINTO + Tables.EPISODES_SEARCH
                                 + "(docid," + Episodes.TITLE + ")"
-                                + " select " + Episodes._ID + "," + Episodes.TITLE
-                                + " from " + Tables.EPISODES + ";");
+                                + " " + QUERY_SELECT + Episodes._ID + "," + Episodes.TITLE
+                                + " " + QUERY_FROM + Tables.EPISODES + ";");
                 db.setTransactionSuccessful();
             } finally {
                 db.endTransaction();
@@ -1289,7 +1155,7 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
 
         StringBuilder query = new StringBuilder();
         // select final result columns
-        query.append("SELECT ");
+        query.append(QUERY_SELECT);
         query.append(Episodes._ID).append(",");
         query.append(Episodes.TITLE).append(",");
         query.append(Episodes.OVERVIEW).append(",");
@@ -1298,20 +1164,20 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
         query.append(Episodes.WATCHED).append(",");
         query.append(Shows.TITLE);
 
-        query.append(" FROM ");
+        query.append(" " + QUERY_FROM);
         query.append("(");
 
         // join all shows...
         query.append("(");
-        query.append("SELECT ").append(BaseColumns._ID).append(" as sid,").append(Shows.TITLE);
-        query.append(" FROM ").append(Tables.SHOWS);
+        query.append(QUERY_SELECT).append(BaseColumns._ID).append(" as sid,").append(Shows.TITLE);
+        query.append(" " + QUERY_FROM).append(Tables.SHOWS);
         query.append(")");
 
-        query.append(" JOIN ");
+        query.append(" " + QUERY_JOIN);
 
         // ...with matching episodes
         query.append("(");
-        query.append("SELECT ");
+        query.append(QUERY_SELECT);
         query.append(Episodes._ID).append(",");
         query.append(Episodes.TITLE).append(",");
         query.append(Episodes.OVERVIEW).append(",");
@@ -1319,37 +1185,37 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
         query.append(Episodes.SEASON).append(",");
         query.append(Episodes.WATCHED).append(",");
         query.append(Shows.REF_SHOW_ID);
-        query.append(" FROM ");
+        query.append(" " + QUERY_FROM);
         // join searchtable results...
         query.append("(");
-        query.append("SELECT ");
+        query.append(QUERY_SELECT);
         query.append(EpisodeSearch._DOCID).append(",");
         query.append("snippet(" + Tables.EPISODES_SEARCH + ",'<b>','</b>','...')").append(" AS ")
                 .append(Episodes.OVERVIEW);
-        query.append(" FROM ").append(Tables.EPISODES_SEARCH);
-        query.append(" WHERE ").append(Tables.EPISODES_SEARCH).append(" MATCH ?");
+        query.append(" " + QUERY_FROM).append(Tables.EPISODES_SEARCH);
+        query.append(" " + QUERY_WHERE).append(Tables.EPISODES_SEARCH).append(" MATCH ?");
         query.append(")");
-        query.append(" JOIN ");
+        query.append(" " + QUERY_JOIN);
         // ...with episodes table
         query.append("(");
-        query.append("SELECT ");
+        query.append(QUERY_SELECT);
         query.append(Episodes._ID).append(",");
         query.append(Episodes.TITLE).append(",");
         query.append(Episodes.NUMBER).append(",");
         query.append(Episodes.SEASON).append(",");
         query.append(Episodes.WATCHED).append(",");
         query.append(Shows.REF_SHOW_ID);
-        query.append(" FROM ").append(Tables.EPISODES);
+        query.append(" " + QUERY_FROM).append(Tables.EPISODES);
         query.append(")");
-        query.append(" ON ").append(Episodes._ID).append("=").append(EpisodeSearch._DOCID);
+        query.append(" " + QUERY_ON).append(Episodes._ID).append("=").append(EpisodeSearch._DOCID);
 
         query.append(")");
-        query.append(" ON ").append("sid=").append(Shows.REF_SHOW_ID);
+        query.append(" " + QUERY_ON).append("sid=").append(Shows.REF_SHOW_ID);
         query.append(")");
 
         // append given selection
         if (selection != null) {
-            query.append(" WHERE ");
+            query.append(" " + QUERY_WHERE);
             query.append("(").append(selection).append(")");
         }
 
@@ -1377,19 +1243,19 @@ public class SeriesGuideDatabase extends SQLiteOpenHelper {
 
     @Nullable
     public static Cursor getSuggestions(String searchTerm, SQLiteDatabase db) {
-        String query = "select _id," + Episodes.TITLE + " as "
-                + SearchManager.SUGGEST_COLUMN_TEXT_1 + "," + Shows.TITLE + " as "
-                + SearchManager.SUGGEST_COLUMN_TEXT_2 + "," + "_id as "
+        String query = "select _id," + Episodes.TITLE + " " + QUERY_AS
+                + SearchManager.SUGGEST_COLUMN_TEXT_1 + "," + Shows.TITLE + " " + QUERY_AS
+                + SearchManager.SUGGEST_COLUMN_TEXT_2 + "," + "_id " + QUERY_AS
                 + SearchManager.SUGGEST_COLUMN_INTENT_DATA_ID
-                + " from ((select _id as sid," + Shows.TITLE + " from " + Tables.SHOWS + ")"
-                + " join "
-                + "(select _id," + Episodes.TITLE + "," + Shows.REF_SHOW_ID
-                + " from " + "(select docid" + " from " + Tables.EPISODES_SEARCH
-                + " where " + Tables.EPISODES_SEARCH + " match " + "?)"
-                + " join "
-                + "(select _id," + Episodes.TITLE + "," + Shows.REF_SHOW_ID + " from episodes)"
-                + "on _id=docid)"
-                + "on sid=" + Shows.REF_SHOW_ID + ")";
+                + " " + QUERY_FROM + " ((select _id " + QUERY_AS + "sid," + Shows.TITLE + " " + QUERY_FROM + Tables.SHOWS + ")"
+                + " " + QUERY_JOIN
+                + "(" + QUERY_SELECT + "_id," + Episodes.TITLE + "," + Shows.REF_SHOW_ID
+                + " " + QUERY_FROM + "(select docid" + " " + QUERY_FROM + Tables.EPISODES_SEARCH
+                + " " + QUERY_WHERE + Tables.EPISODES_SEARCH + " match " + "?)"
+                + " " + QUERY_JOIN
+                + "(" + QUERY_SELECT + " _id," + Episodes.TITLE + "," + Shows.REF_SHOW_ID + " " + QUERY_FROM + " episodes)"
+                + QUERY_ON + "_id=docid)"
+                + QUERY_ON + "sid=" + Shows.REF_SHOW_ID + ")";
 
         // ensure to strip double quotation marks (would break the MATCH query)
         if (searchTerm != null) {
