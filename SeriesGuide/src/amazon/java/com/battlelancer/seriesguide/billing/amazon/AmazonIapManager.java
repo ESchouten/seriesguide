@@ -3,6 +3,8 @@ package com.battlelancer.seriesguide.billing.amazon;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
+
 import com.amazon.device.iap.PurchasingService;
 import com.amazon.device.iap.model.FulfillmentResult;
 import com.amazon.device.iap.model.Product;
@@ -250,18 +252,10 @@ public class AmazonIapManager {
                 // purchase
                 revokeEntitlement(receipt, userData.getUserId());
             } else {
-                // We strongly recommend that you verify the receipt
-                // server-side.
-
-                // don't care for now
-//                if (!verifyReceiptFromYourService(receipt.getReceiptId(), userData)) {
-//                    // if the purchase cannot be verified,
-//                    // show relevant error message to the customer.
-//                    return;
-//                }
                 grantPurchase(receipt, userData);
             }
         } catch (final Throwable e) {
+            Log.e("purchageError", e.toString(), e);
             EventBus.getDefault().post(new AmazonIapMessageEvent(R.string.subscription_failed));
         }
     }
@@ -277,18 +271,10 @@ public class AmazonIapManager {
                 // Check whether this receipt is for an expired or canceled subscription
                 revokeSubscription(receipt);
             } else {
-                // We strongly recommend that you verify the receipt on server-side.
-
-                // don't care for now
-                //if (!verifyReceiptFromYourService(receipt.getReceiptId(), userData)) {
-                //    // if the purchase cannot be verified,
-                //    // show relevant error message to the customer.
-                //    return;
-                //}
-
                 grantPurchase(receipt, userData);
             }
         } catch (Throwable e) {
+            Log.e("purchageError", e.toString(), e);
             EventBus.getDefault().post(new AmazonIapMessageEvent(R.string.subscription_failed));
         }
     }
