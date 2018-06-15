@@ -17,6 +17,7 @@ import com.battlelancer.seriesguide.adapters.model.HeaderData;
 import com.battlelancer.seriesguide.provider.SeriesGuideContract;
 import com.battlelancer.seriesguide.provider.SeriesGuideContract.Episodes;
 import com.battlelancer.seriesguide.provider.SeriesGuideDatabase;
+import com.battlelancer.seriesguide.provider.Tables;
 import com.battlelancer.seriesguide.settings.DisplaySettings;
 import com.battlelancer.seriesguide.thetvdbapi.TvdbImageTools;
 import com.battlelancer.seriesguide.ui.CalendarFragment;
@@ -264,7 +265,7 @@ public class CalendarAdapter extends CursorAdapter implements StickyGridHeadersB
     public interface Query {
 
         String[] PROJECTION = new String[] {
-                SeriesGuideDatabase.Tables.EPISODES + "." + Episodes._ID,
+                Tables.EPISODES + "." + Episodes._ID,
                 Episodes.TITLE,
                 Episodes.NUMBER,
                 Episodes.SEASON,

@@ -24,6 +24,7 @@ import com.battlelancer.seriesguide.dataliberation.DataLiberationTools;
 import com.battlelancer.seriesguide.dataliberation.model.Show;
 import com.battlelancer.seriesguide.enums.EpisodeFlags;
 import com.battlelancer.seriesguide.enums.SeasonTags;
+import com.battlelancer.seriesguide.provider.Qualified;
 import com.battlelancer.seriesguide.provider.SeriesGuideContract;
 import com.battlelancer.seriesguide.provider.SeriesGuideContract.Episodes;
 import com.battlelancer.seriesguide.provider.SeriesGuideContract.Seasons;
@@ -38,8 +39,6 @@ import java.util.HashSet;
 import java.util.List;
 import org.greenrobot.eventbus.EventBus;
 import timber.log.Timber;
-
-import static com.battlelancer.seriesguide.provider.SeriesGuideDatabase.Qualified;
 
 public class DBUtils {
 

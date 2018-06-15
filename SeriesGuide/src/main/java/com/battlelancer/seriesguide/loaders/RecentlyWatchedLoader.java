@@ -8,6 +8,7 @@ import com.battlelancer.seriesguide.adapters.NowAdapter;
 import com.battlelancer.seriesguide.provider.SeriesGuideContract;
 import com.battlelancer.seriesguide.provider.SeriesGuideContract.Activity;
 import com.battlelancer.seriesguide.provider.SeriesGuideDatabase;
+import com.battlelancer.seriesguide.provider.Tables;
 import com.battlelancer.seriesguide.thetvdbapi.TvdbImageTools;
 import com.battlelancer.seriesguide.util.TextTools;
 import com.uwetrottmann.androidutils.GenericSimpleLoader;
@@ -46,7 +47,7 @@ public class RecentlyWatchedLoader extends GenericSimpleLoader<List<NowAdapter.N
             Cursor episodeQuery = getContext().getContentResolver().query(
                     SeriesGuideContract.Episodes.buildEpisodeWithShowUri(episodeTvdbId),
                     new String[] {
-                            SeriesGuideDatabase.Tables.EPISODES + "."
+                            Tables.EPISODES + "."
                                     + SeriesGuideContract.Episodes._ID, // 0
                             SeriesGuideContract.Episodes.TITLE,
                             SeriesGuideContract.Episodes.NUMBER,

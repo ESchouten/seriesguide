@@ -33,7 +33,6 @@ import static com.battlelancer.seriesguide.provider.SeriesGuideContract.Lists;
 import static com.battlelancer.seriesguide.provider.SeriesGuideContract.Movies;
 import static com.battlelancer.seriesguide.provider.SeriesGuideContract.Seasons;
 import static com.battlelancer.seriesguide.provider.SeriesGuideContract.Shows;
-import static com.battlelancer.seriesguide.provider.SeriesGuideDatabase.Tables;
 
 public class SeriesGuideProvider extends ContentProvider {
 

@@ -6,6 +6,7 @@ import android.text.format.DateUtils;
 import com.battlelancer.seriesguide.R;
 import com.battlelancer.seriesguide.adapters.NowAdapter;
 import com.battlelancer.seriesguide.provider.SeriesGuideDatabase;
+import com.battlelancer.seriesguide.provider.Tables;
 import com.battlelancer.seriesguide.settings.DisplaySettings;
 import com.battlelancer.seriesguide.thetvdbapi.TvdbImageTools;
 import com.battlelancer.seriesguide.util.EpisodeTools;
@@ -102,7 +103,7 @@ public class ReleasedTodayLoader extends GenericSimpleLoader<List<NowAdapter.Now
                 + Episodes.NUMBER + " DESC";
 
         String[] PROJECTION = new String[] {
-                SeriesGuideDatabase.Tables.EPISODES + "." + Episodes._ID, // 0
+                Tables.EPISODES + "." + Episodes._ID, // 0
                 Episodes.TITLE,
                 Episodes.NUMBER,
                 Episodes.SEASON, // 3
